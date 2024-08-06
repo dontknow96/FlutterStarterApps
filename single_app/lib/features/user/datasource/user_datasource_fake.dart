@@ -26,11 +26,15 @@ class UserDatasourceFake implements UserDatasource {
     String username,
     String password,
   ) async {
-    await Waiter.waitRandomTime();
+    await Waiter.waitNormalRandomTime();
 
     final passwordCheck = _fakeUsers[username];
 
     if (passwordCheck == null) {
+      return (LoginSourceResponse.wrongCredentials, null);
+    }
+
+    if (passwordCheck.password != password) {
       return (LoginSourceResponse.wrongCredentials, null);
     }
 
@@ -39,7 +43,7 @@ class UserDatasourceFake implements UserDatasource {
 
   @override
   Future<LogoutSourceResponse> logout() async {
-    await Waiter.waitRandomTime();
+    await Waiter.waitNormalRandomTime();
 
     return LogoutSourceResponse.success;
   }

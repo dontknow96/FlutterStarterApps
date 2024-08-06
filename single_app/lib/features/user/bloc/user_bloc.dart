@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:single_app/app/constants.dart';
 import 'package:single_app/features/user/bloc/user_bloc_event.dart';
 import 'package:single_app/features/user/bloc/user_bloc_state.dart';
 import 'package:single_app/features/user/repository/user_repository.dart';
@@ -15,6 +16,9 @@ class UserBloc extends Bloc<UserBlocEvent, UserBlocState> {
   final UserRepository userRepository;
 
   Future<void> _login(Login event, Emitter<UserBlocState> emit) async {
+    if (state.requestState != UserBlocRequestState.none) {
+      return;
+    }
     emit(state.copyWith(requestState: UserBlocRequestState.waiting));
 
     final loginResponse =
@@ -24,7 +28,7 @@ class UserBloc extends Bloc<UserBlocEvent, UserBlocState> {
       case LoginResponse.success:
         emit(
           state.copyWith(
-            requestState: UserBlocRequestState.none,
+            requestState: UserBlocRequestState.success,
             email: loginResponse.$2!.email,
             username: loginResponse.$2!.username,
             loggedIn: true,
@@ -39,9 +43,17 @@ class UserBloc extends Bloc<UserBlocEvent, UserBlocState> {
       case LoginResponse.unknownError:
         emit(state.copyWith(requestState: UserBlocRequestState.unknownError));
     }
+
+    await Future.delayed(
+      Constants.stateResetDuration,
+      () => emit(state.copyWith(requestState: UserBlocRequestState.none)),
+    );
   }
 
   Future<void> _logout(Logout event, Emitter<UserBlocState> emit) async {
+    if (state.requestState != UserBlocRequestState.none) {
+      return;
+    }
     await userRepository.logout();
     emit(
       state.copyWith(
